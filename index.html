@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>花色皇冠开奖游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "微软雅黑", Arial, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+        }
+        /* 游戏容器 */
+        .game-container {
+            width: 100%;
+            max-width: 500px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        /* 积分显示 */
+        .score-box {
+            text-align: center;
+            font-size: 22px;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: rgba(255,215,0,0.1);
+            border-radius: 10px;
+            border: 1px solid #ffd700;
+        }
+        .score {
+            color: #ffd700;
+            font-weight: bold;
+        }
+        /* 目标选择区 */
+        .targets {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin: 25px 0;
+        }
+        .target {
+            width: 100%;
+            aspect-ratio: 1/1;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+            background: rgba(255,255,255,0.08);
+        }
+        .target.active {
+            background: rgba(255,215,0,0.2);
+            border-color: #ffd700;
+            transform: scale(1.05);
+        }
+        .target:hover {
+            background: rgba(255,255,255,0.15);
+        }
+        .crown {
+            font-size: 28px;
+        }
+        /* 押注区 */
+        .bet-box {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .bet-input {
+            width: 100px;
+            padding: 10px;
+            font-size: 18px;
+            text-align: center;
+            border-radius: 8px;
+            border: 2px solid #ffd700;
+            background: rgba(0,0,0,0.3);
+            color: #fff;
+            margin: 0 10px;
+        }
+        .bet-input:focus {
+            outline: none;
+            border-color: #fff;
+        }
+        /* 按钮区 */
+        .btn-box {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .btn {
+            flex: 1;
+            padding: 12px 0;
+            border-radius: 10px;
+            border: none;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-bet {
+            background: #4CAF50;
+            color: #fff;
+        }
+        .btn-bet:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .btn-reset {
+            background: #ff9800;
+            color: #fff;
+        }
+        /* 开奖结果区 */
+        .result-box {
+            margin-top: 25px;
+            text-align: center;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .result-title {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .result-icon {
+            font-size: 50px;
+            margin: 15px 0;
+            animation: bounce 0.8s ease;
+        }
+        .result-desc {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .win {
+            color: #4CAF50;
+        }
+        .lose {
+            color: #f44336;
+        }
+        /* 开奖历史记录（新增核心样式） */
+        .history-box {
+            margin-top: 30px;
+            padding: 15px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .history-title {
+            font-size: 16px;
+            color: #ffd700;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .history-clear {
+            font-size: 12px;
+            color: #ccc;
+            cursor: pointer;
+        }
+        .history-clear:hover {
+            color: #f44336;
+        }
+        .history-list {
+            max-height: 200px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 8px;
+        }
+        .history-item {
+            padding: 8px 5px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            text-align: center;
+            font-size: 14px;
+        }
+        .history-item .icon {
+            font-size: 18px;
+            margin-bottom: 3px;
+        }
+        .history-item .crown-icon { /* 皇冠记录高亮 */
+            color: #ffd700;
+        }
+        .history-item .num {
+            font-size: 10px;
+            color: #ccc;
+        }
+        /* 动画 */
+        @keyframes bounce {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        /* 提示文本 */
+        .tip {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #ccc;
+            text-align: center;
+        }
+        /* 滚动条美化 */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #ffd700;
+            border-radius: 2px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- 积分显示 -->
+        <div class="score-box">
+            当前积分：<span class="score" id="score">1000</span>
+        </div>
+
+        <!-- 目标选择（♠️♥️♣️♦️皇冠） -->
+        <div class="targets">
+            <div class="target" data-target="spade" data-rate="3.8">♠️</div>
+            <div class="target" data-target="heart" data-rate="4">♥️</div>
+            <div class="target" data-target="club" data-rate="4">♣️</div>
+            <div class="target" data-target="diamond" data-rate="4">♦️</div>
+            <div class="target crown" data-target="crown" data-rate="4">👑</div>
+        </div>
+
+        <!-- 押注区 -->
+        <div class="bet-box">
+            押注积分：
+            <input type="number" class="bet-input" id="betNum" min="1" value="10" placeholder="1-当前积分">
+        </div>
+
+        <!-- 按钮区 -->
+        <div class="btn-box">
+            <button class="btn btn-bet" id="betBtn">确认押注并开奖</button>
+            <button class="btn btn-reset" id="resetBtn">重置选择</button>
+        </div>
+
+        <!-- 开奖结果 -->
+        <div class="result-box" id="resultBox">
+            <div class="result-title">等待开奖...</div>
+            <div class="result-icon" id="resultIcon"></div>
+            <div class="result-desc" id="resultDesc"></div>
+        </div>
+
+        <!-- 开奖历史记录（新增核心DOM） -->
+        <div class="history-box">
+            <div class="history-title">
+                开奖历史（近100期）
+                <span class="history-clear" id="clearHistory">清空记录</span>
+            </div>
+            <div class="history-list" id="historyList"></div>
+        </div>
+
+        <!-- 规则提示 -->
+        <div class="tip">
+            ✅ 可选择1-4个目标押注 | 👑皇冠概率3% | ♠️3.8倍 | 其余4倍 | 历史记录最多保留100条
+        </div>
+    </div>
+
+    <!-- 音效（隐藏） -->
+    <audio id="openAudio" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3" preload="auto">
+    <audio id="winAudio" src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3" preload="auto">
+    <audio id="loseAudio" src="https://assets.mixkit.co/sfx/preview/mixkit-player-losing-or-failing-2042.mp3" preload="auto">
+
+    <script>
+        // 全局变量（新增历史记录相关变量）
+        let currentScore = 1000; // 初始积分
+        let selectedTargets = []; // 选中的目标
+        const crownProb = 0.03; // 皇冠概率3%（2%-5%区间，可修改）
+        let historyList = []; // 开奖历史数组
+        const maxHistory = 100; // 最多保留100期
+        let issueNum = 1; // 期数自增
+
+        // 获取DOM元素（新增历史记录DOM）
+        const scoreEl = document.getElementById('score');
+        const targetEls = document.querySelectorAll('.target');
+        const betNumEl = document.getElementById('betNum');
+        const betBtn = document.getElementById('betBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const resultBox = document.getElementById('resultBox');
+        const resultIcon = document.getElementById('resultIcon');
+        const resultDesc = document.getElementById('resultDesc');
+        const historyListEl = document.getElementById('historyList');
+        const clearHistoryEl = document.getElementById('clearHistory');
+        // 音效元素
+        const openAudio = document.getElementById('openAudio');
+        const winAudio = document.getElementById('winAudio');
+        const loseAudio = document.getElementById('loseAudio');
+
+        // 初始化
+        init();
+        function init() {
+            updateScore();
+            bindEvents();
+        }
+
+        // 绑定事件（新增清空历史事件）
+        function bindEvents() {
+            // 选择目标（1-4个）
+            targetEls.forEach(el => {
+                el.addEventListener('click', () => {
+                    const target = el.dataset.target;
+                    // 最多选4个，已选中则取消
+                    if (el.classList.contains('active')) {
+                        el.classList.remove('active');
+                        selectedTargets = selectedTargets.filter(item => item.target !== target);
+                    } else {
+                        if (selectedTargets.length >= 4) {
+                            alert('最多只能选择4个目标哦！');
+                            return;
+                        }
+                        el.classList.add('active');
+                        selectedTargets.push({
+                            target: target,
+                            rate: parseFloat(el.dataset.rate)
+                        });
+                    }
+                });
+            });
+
+            // 确认押注开奖
+            betBtn.addEventListener('click', handleBet);
+
+            // 重置选择
+            resetBtn.addEventListener('click', resetSelect);
+
+            // 清空历史记录（新增）
+            clearHistoryEl.addEventListener('click', () => {
+                if (confirm('确定要清空所有开奖历史吗？')) {
+                    historyList = [];
+                    issueNum = 1;
+                    renderHistory();
+                }
+            });
+        }
+
+        // 押注处理
+        function handleBet() {
+            const betNum = parseInt(betNumEl.value);
+            // 校验
+            if (selectedTargets.length === 0) {
+                alert('请先选择1-4个目标再开奖！');
+                return;
+            }
+            if (isNaN(betNum) || betNum < 1) {
+                alert('押注积分必须大于0！');
+                return;
+            }
+            if (betNum > currentScore) {
+                alert('积分不足，无法押注！');
+                return;
+            }
+
+            // 禁用按钮，防止重复点击
+            betBtn.disabled = true;
+            // 扣除押注积分
+            currentScore -= betNum;
+            updateScore();
+            // 播放开奖音效
+            playAudio(openAudio);
+            // 模拟开奖延迟（更真实）
+            setTimeout(() => {
+                const result = randomResult(); // 随机开奖结果
+                showResult(result, betNum); // 显示结果
+                addToHistory(result); // 新增：添加到历史记录
+                betBtn.disabled = false;
+            }, 1200);
+        }
+
+        // 完全随机开奖（核心：皇冠3%，其他4种均分97%）
+        function randomResult() {
+            const random = Math.random(); // 0-1随机数
+            // 皇冠概率3%
+            if (random < crownProb) {
+                return { target: 'crown', icon: '👑' };
+            }
+            // 其他4种花色均分97%（各约24.25%）
+            const flowerRandom = Math.random();
+            if (flowerRandom < 0.25) return { target: 'spade', icon: '♠️' };
+            if (flowerRandom < 0.5) return { target: 'heart', icon: '♥️' };
+            if (flowerRandom < 0.75) return { target: 'club', icon: '♣️' };
+            return { target: 'diamond', icon: '♦️' };
+        }
+
+        // 显示开奖结果（中奖/未中奖）
+        function showResult(result, betNum) {
+            const winTarget = selectedTargets.find(item => item.target === result.target);
+            resultIcon.innerHTML = result.icon;
+            
+            if (winTarget) {
+                // 中奖：计算奖金（押注数*赔率）
+                const bonus = Math.floor(betNum * winTarget.rate);
+                currentScore += bonus;
+                updateScore();
+                resultDesc.className = 'result-desc win';
+                resultDesc.innerHTML = `恭喜中奖！奖金${bonus}积分<br>赔率${winTarget.rate}倍`;
+                playAudio(winAudio); // 中奖音效
+            } else {
+                // 未中奖
+                resultDesc.className = 'result-desc lose';
+                resultDesc.innerHTML = '很遗憾，未中奖';
+                playAudio(loseAudio); // 未中奖音效
+            }
+        }
+
+        // 新增：添加开奖记录到历史
+        function addToHistory(result) {
+            const now = new Date();
+            const time = `${now.getHours().toString().padStart(2,0)}:${now.getMinutes().toString().padStart(2,0)}:${now.getSeconds().toString().padStart(2,0)}`;
+            // 新增记录
+            historyList.unshift({
+                issue: issueNum++, // 期数
+                icon: result.icon,
+                target: result.target,
+                time: time
+            });
+            // 超过100条，删除最后一条（最早记录）
+            if (historyList.length > maxHistory) {
+                historyList.pop();
+            }
+            // 渲染历史记录
+            renderHistory();
+        }
+
+        // 新增：渲染历史记录到页面
+        function renderHistory() {
+            if (historyList.length === 0) {
+                historyListEl.innerHTML = '<div style="grid-column: 1/-1; color:#ccc; padding:20px 0;">暂无开奖记录</div>';
+                return;
+            }
+            historyListEl.innerHTML = historyList.map(item => `
+                <div class="history-item">
+                    <div class="icon ${item.target === 'crown' ? 'crown-icon' : ''}">${item.icon}</div>
+                    <div class="num">第${item.issue}期</div>
+                </div>
+            `).join('');
+        }
+
+        // 更新积分显示
+        function updateScore() {
+            scoreEl.innerText = currentScore;
+            betNumEl.max = currentScore; // 押注上限=当前积分
+        }
+
+        // 重置选择
+        function resetSelect() {
+            selectedTargets = [];
+            targetEls.forEach(el => el.classList.remove('active'));
+            resultDesc.innerHTML = '';
+            resultIcon.innerHTML = '';
+        }
+
+        // 播放音效
+        function playAudio(audio) {
+            audio.currentTime = 0; // 重置播放位置
+            audio.play().catch(err => console.log('音效播放失败', err));
+        }
+    </script>
+</body>
+</html>
